@@ -1,73 +1,118 @@
-# React + TypeScript + Vite
+# Vibe-Code UI Studio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A demonstration app for the `@json-render` library — build dynamic UIs from JSON specifications with real-time data binding.
 
-Currently, two official plugins are available:
+## Overview
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+This project provides an interactive playground where you can:
 
-## React Compiler
+- Define UI layouts using JSON in a live editor
+- See changes rendered instantly in a preview pane
+- Bind UI elements to backend data using path references
+- Simulate real-time data updates
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Quick Start
 
-## Expanding the ESLint configuration
+```bash
+# Install dependencies
+npm install
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+# Start both frontend and backend servers
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+This launches:
+- **Frontend**: http://localhost:5173 (Vite dev server with HMR)
+- **Backend API**: http://localhost:3001 (Express server with mock data)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Available Scripts
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start both servers concurrently |
+| `npm run client` | Start Vite dev server only |
+| `npm run server` | Start Express API server only |
+| `npm run build` | TypeScript check + production build |
+| `npm run lint` | Run ESLint |
+| `npm run preview` | Preview production build |
+
+## How It Works
+
+### JSON UI Format
+
+UIs are defined as JSON trees with this structure:
+
+```json
+{
+  "root": "main",
+  "elements": {
+    "main": {
+      "type": "Stack",
+      "props": { "gap": "md" },
+      "children": ["greeting"]
     },
-  },
-])
+    "greeting": {
+      "type": "Text",
+      "props": { "content": { "path": "/user/name" } }
+    }
+  }
+}
 ```
+
+### Path-Based Data Binding
+
+Props can reference backend data using `{ "path": "/field/name" }` syntax:
+
+```json
+{ "content": { "path": "/user/name" } }
+```
+
+Available data paths include:
+- `/user/*` - User profile (name, email, role, skills, stats)
+- `/team/*` - Team members array
+- `/metrics/*` - System metrics (cpu, memory, requests, errors)
+- `/orders/*` - Order statistics
+- `/products/*` - Product data
+
+### Available Components
+
+| Component | Description |
+|-----------|-------------|
+| `Box` | Container with padding, background, border options |
+| `Stack` | Flexbox layout (row/column) with gap, alignment |
+| `Text` | Typography with variants (h1-h3, body, caption, code) |
+| `Button` | Clickable button with variants and sizes |
+| `Input` | Form input with label and two-way binding |
+| `Card` | Elevated card container with optional title |
+| `Badge` | Status badge with color variants |
+| `Avatar` | User avatar with initials and color |
+| `Divider` | Horizontal separator |
+| `Image` | Responsive image with rounded option |
+| `ProgressBar` | Progress indicator with color and label |
+| `Metric` | Metric display with trend indicators |
+| `List` | Data-bound list container |
+
+## API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/data` | GET | Returns all mock data |
+| `/api/data` | POST | Update data at specified path |
+| `/api/simulate` | GET | Randomly update metrics for demo |
+
+## Example Presets
+
+The app includes several pre-built examples:
+
+- **User Profile** - Dynamic profile card with skills and stats
+- **System Metrics** - Live CPU/memory monitoring dashboard
+- **Order Dashboard** - E-commerce analytics view
+- **Team Directory** - Team member listing with status
+- **Static Example** - Simple example without data binding
+
+## Tech Stack
+
+- React 19 + TypeScript 5.9
+- Vite 7
+- Express 5
+- `@json-render/core` and `@json-render/react`
