@@ -1,5 +1,7 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import * as pollamin from "./services/pollamin.js";
 
 const app = express();
 app.use(cors());
@@ -76,6 +78,22 @@ app.post("/api/data", (req, res) => {
     res.json({ success: true });
   } else {
     res.status(400).json({ error: "Invalid path" });
+  }
+});
+
+// LLM endpoint - proxy to Pollamin API
+app.post("/api/llm/prompt", async (req, res) => {
+  const { model, prompt } = req.body;
+
+  if (!prompt) {
+    return res.status(400).json({ error: "prompt is required" });
+  }
+
+  try {
+    const data = await pollamin.prompt(prompt, model);
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
