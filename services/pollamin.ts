@@ -1,6 +1,13 @@
 const POLLAMIN_API_URL = "https://pollamin.com/api/prompt";
 
-export async function prompt(promptText, model = "gemini") {
+export interface PollaminResponse {
+  [key: string]: unknown;
+}
+
+export async function prompt(
+  promptText: string,
+  model: string = "gemini"
+): Promise<PollaminResponse> {
   const apiKey = process.env.POLLAMIN_API_KEY;
   if (!apiKey) {
     throw new Error("POLLAMIN_API_KEY not configured");
@@ -20,5 +27,5 @@ export async function prompt(promptText, model = "gemini") {
     throw new Error(text || `Pollamin API error: ${response.status}`);
   }
 
-  return response.json();
+  return response.json() as Promise<PollaminResponse>;
 }

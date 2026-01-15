@@ -1,14 +1,82 @@
 import "dotenv/config";
-import express from "express";
+import express, { type Request, type Response } from "express";
 import cors from "cors";
 import * as pollamin from "./services/pollamin.js";
+
+// Type definitions for our mock database
+interface UserStats {
+  commits: number;
+  prs: number;
+  reviews: number;
+}
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  avatar: string;
+  department: string;
+  joinDate: string;
+  skills: string[];
+  stats: UserStats;
+}
+
+interface TeamMember {
+  id: number;
+  name: string;
+  role: string;
+  status: string;
+}
+
+interface Metrics {
+  cpu: number;
+  memory: number;
+  requests: number;
+  errors: number;
+  uptime: number;
+  responseTime: number;
+}
+
+interface Orders {
+  total: number;
+  pending: number;
+  completed: number;
+  cancelled: number;
+  revenue: number;
+  avgOrderValue: number;
+}
+
+interface Notification {
+  id: number;
+  type: string;
+  message: string;
+  time: string;
+}
+
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+  users: number;
+  growth: number;
+}
+
+interface Database {
+  user: User;
+  team: TeamMember[];
+  metrics: Metrics;
+  orders: Orders;
+  notifications: Notification[];
+  products: Product[];
+}
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
 // Mock database
-const db = {
+const db: Database = {
   user: {
     id: 1,
     name: "Sarah Chen",
@@ -59,16 +127,22 @@ const db = {
 };
 
 // GET /api/data - returns all data
-app.get("/api/data", (req, res) => {
+app.get("/api/data", (_req: Request, res: Response) => {
   res.json(db);
 });
 
 // POST /api/data - update data (for demo interactivity)
-app.post("/api/data", (req, res) => {
+interface UpdateDataBody {
+  path: string;
+  value: unknown;
+}
+
+app.post("/api/data", (req: Request<object, unknown, UpdateDataBody>, res: Response) => {
   const { path, value } = req.body;
   const parts = path.split("/").filter(Boolean);
 
-  let target = db;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let target: any = db;
   for (let i = 0; i < parts.length - 1; i++) {
     target = target[parts[i]];
   }
@@ -82,23 +156,30 @@ app.post("/api/data", (req, res) => {
 });
 
 // LLM endpoint - proxy to Pollamin API
-app.post("/api/llm/prompt", async (req, res) => {
+interface LlmPromptBody {
+  model?: string;
+  prompt?: string;
+}
+
+app.post("/api/llm/prompt", async (req: Request<object, unknown, LlmPromptBody>, res: Response) => {
   const { model, prompt } = req.body;
 
   if (!prompt) {
-    return res.status(400).json({ error: "prompt is required" });
+    res.status(400).json({ error: "prompt is required" });
+    return;
   }
 
   try {
     const data = await pollamin.prompt(prompt, model);
     res.json(data);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    const message = err instanceof Error ? err.message : "Unknown error";
+    res.status(500).json({ error: message });
   }
 });
 
 // Simulate real-time updates
-app.get("/api/simulate", (req, res) => {
+app.get("/api/simulate", (_req: Request, res: Response) => {
   // Randomly update metrics
   db.metrics.cpu = Math.floor(Math.random() * 60) + 20;
   db.metrics.memory = Math.floor(Math.random() * 40) + 50;
@@ -119,8 +200,7 @@ app.get("/api/simulate", (req, res) => {
   db.user.stats.reviews += Math.floor(Math.random() * 4);
 
   // Randomly change team member statuses
-  const statuses = ["active", "away", "active", "active"];
-  db.team.forEach((member, i) => {
+  db.team.forEach((member) => {
     member.status = Math.random() > 0.7 ? "away" : "active";
   });
 
