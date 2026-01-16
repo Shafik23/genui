@@ -52,19 +52,28 @@ AVAILABLE COMPONENTS:
 12. Metric - Metric display with optional trend
     Props: label (string or {"path": "..."}), value (string|number or {"path": "..."}), prefix (string), suffix (string), trend ("up"|"down"|"neutral"), trendValue (string or {"path": "..."})
 
-13. List - List container for array data
-    Props: items (path string to array), itemKey (string)
-
 DYNAMIC DATA BINDING:
 Use {"path": "/field/name"} to bind to backend data.
 Available paths:
 - /user/name, /user/email, /user/role, /user/department, /user/joinDate
 - /user/skills/0, /user/skills/1, /user/skills/2, /user/skills/3
 - /user/stats/commits, /user/stats/prs, /user/stats/reviews
-- /team (array), /team/0/name, /team/0/role, /team/0/status
+- /team/0/name, /team/0/role, /team/0/status (team has 4 members: indices 0-3)
+- /team/1/name, /team/1/role, /team/1/status
+- /team/2/name, /team/2/role, /team/2/status
+- /team/3/name, /team/3/role, /team/3/status
 - /metrics/cpu, /metrics/memory, /metrics/requests, /metrics/errors, /metrics/uptime, /metrics/responseTime
 - /orders/total, /orders/pending, /orders/completed, /orders/cancelled, /orders/revenue, /orders/avgOrderValue
-- /products (array), /products/0/name, /products/0/price, /products/0/users, /products/0/growth
+- /products/0/name, /products/0/price, /products/0/users, /products/0/growth (products has 3 items: indices 0-2)
+- /products/1/name, /products/1/price, /products/1/users, /products/1/growth
+- /products/2/name, /products/2/price, /products/2/users, /products/2/growth
+
+DISPLAYING ARRAYS:
+To display multiple items from an array (like team members), create separate elements for each index.
+Example for showing all team members:
+- Create "member0" card with paths like /team/0/name, /team/0/role
+- Create "member1" card with paths like /team/1/name, /team/1/role
+- And so on for each array index
 
 RULES:
 1. Every element MUST have a unique "key" property matching its key in elements

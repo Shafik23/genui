@@ -682,6 +682,33 @@ function App() {
         jsonContent = jsonMatch[1].trim();
       }
 
+      // Handle escaped JSON from LLM responses
+      // LLMs often return JSON with literal escape sequences (\n, \", etc.)
+      // that need to be converted to actual characters before parsing
+
+      // First, try parsing as a JSON string if it looks double-stringified
+      if (jsonContent.startsWith('"') && jsonContent.endsWith('"')) {
+        try {
+          const unescaped = JSON.parse(jsonContent);
+          if (typeof unescaped === 'string') {
+            jsonContent = unescaped;
+          }
+        } catch {
+          // Not a valid JSON string, continue
+        }
+      }
+
+      // If content has literal escape sequences (backslash followed by n/r/t/"),
+      // manually unescape them
+      if (jsonContent.includes('\\n') || jsonContent.includes('\\r') ||
+          jsonContent.includes('\\t') || jsonContent.includes('\\"')) {
+        jsonContent = jsonContent
+          .replace(/\\n/g, '\n')
+          .replace(/\\r/g, '\r')
+          .replace(/\\t/g, '\t')
+          .replace(/\\"/g, '"');
+      }
+
       // Validate the JSON
       const parsed = JSON.parse(jsonContent);
 
