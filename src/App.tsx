@@ -2,6 +2,8 @@ import { useState, useMemo, useCallback, useEffect } from "react";
 import { JSONUIProvider, Renderer } from "@json-render/react";
 import type { UITree } from "@json-render/core";
 import { componentRegistry } from "./components";
+import { VibePromptInput } from "./components/VibePromptInput";
+import { VIBE_CODE_SYSTEM_PROMPT } from "./lib/vibeCodeSystemPrompt";
 
 const API_URL = "http://localhost:3001";
 
@@ -599,6 +601,8 @@ function App() {
   const [data, setData] = useState<Record<string, unknown>>({});
   const [loading, setLoading] = useState(false);
   const [dataError, setDataError] = useState<string | null>(null);
+  const [vibeLoading, setVibeLoading] = useState(false);
+  const [vibeError, setVibeError] = useState<string | null>(null);
 
   const parsedUI = useMemo((): UITree | null => {
     try {
@@ -636,6 +640,71 @@ function App() {
       setDataError((e as Error).message);
     }
   }, [fetchData]);
+
+  const handleVibeGenerate = useCallback(async (userPrompt: string) => {
+    setVibeLoading(true);
+    setVibeError(null);
+
+    try {
+      const fullPrompt = `${VIBE_CODE_SYSTEM_PROMPT}\n\nUser request: ${userPrompt}`;
+
+      const response = await fetch(`${API_URL}/api/llm/prompt`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ prompt: fullPrompt }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      // Extract JSON content from the response
+      let jsonContent: string;
+
+      if (typeof data === "string") {
+        jsonContent = data;
+      } else if (data.content) {
+        jsonContent = data.content;
+      } else if (data.text) {
+        jsonContent = data.text;
+      } else if (data.response) {
+        jsonContent = data.response;
+      } else {
+        jsonContent = JSON.stringify(data, null, 2);
+      }
+
+      // Extract JSON from markdown code blocks if present
+      const jsonMatch = jsonContent.match(/```(?:json)?\s*([\s\S]*?)```/);
+      if (jsonMatch) {
+        jsonContent = jsonMatch[1].trim();
+      }
+
+      // Validate the JSON
+      const parsed = JSON.parse(jsonContent);
+
+      // Basic structure validation
+      if (!parsed.root || !parsed.elements) {
+        throw new Error("Invalid UI structure: missing 'root' or 'elements'");
+      }
+
+      if (!parsed.elements[parsed.root]) {
+        throw new Error(`Root element '${parsed.root}' not found in elements`);
+      }
+
+      // Set the validated JSON
+      setJsonInput(JSON.stringify(parsed, null, 2));
+      setVibeError(null);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to generate UI";
+      setVibeError(message);
+      console.error("Vibe-code generation error:", err);
+    } finally {
+      setVibeLoading(false);
+    }
+  }, []);
 
   // Auto-fetch data on mount
   useEffect(() => {
@@ -697,6 +766,12 @@ function App() {
       </header>
 
       <div style={{ padding: "0 32px 32px" }}>
+        <VibePromptInput
+          onGenerate={handleVibeGenerate}
+          isLoading={vibeLoading}
+          error={vibeError}
+        />
+
         <div style={{ marginBottom: "16px" }}>
           <span style={{ fontSize: "0.875rem", fontWeight: 500, marginRight: "12px" }}>
             Load preset:
